@@ -7,7 +7,7 @@ import {Client} from "@chainlink/contracts-ccip/src/v0.8/ccip/libraries/Client.s
 import {IERC20} from "@chainlink/contracts-ccip/src/v0.8/vendor/openzeppelin-solidity/v4.8.0/token/ERC20/IERC20.sol";
 
 
-/// Cross Chain Transfer
+/// @title - A simple contract for transferring tokens across chains.
 contract MultiTransfer is OwnerIsCreator {
     // Custom errors to provide more descriptive revert messages.
     error NotEnoughBalance(uint256 currentBalance, uint256 calculatedFees); // Used to make sure contract has enough balance to cover the fees.
@@ -25,8 +25,10 @@ contract MultiTransfer is OwnerIsCreator {
         uint256 fees // The fees paid for sending the message.
     );
 
+
     // Mapping to keep track of allowlisted destination chains.
     mapping(uint64 => bool) public allowlistedChains;
+    uint64[] private allowlist = [16015286601757825753, 2664363617261496610, 12532609583862916517, 14767482510784806043, 13264668187771770619, 5790810961207155433];
 
     IRouterClient private s_router;
 
@@ -38,7 +40,11 @@ contract MultiTransfer is OwnerIsCreator {
     constructor(address _router, address _link) {
         s_router = IRouterClient(_router);
         s_linkToken = IERC20(_link);
+        for (uint256 i = 0; i < allowlist.length; i++) {
+            allowlistedChains[allowlist[i]] = true;
+        }
     }
+
 
     /// @dev Modifier that checks if the chain with the given destinationChainSelector is allowlisted.
     /// @param _destinationChainSelector The selector of the destination chain.
@@ -47,6 +53,7 @@ contract MultiTransfer is OwnerIsCreator {
             revert DestinationChainNotAllowlisted(_destinationChainSelector);
         _;
     }
+
 
     /// @dev Updates the allowlist status of a destination chain for transactions.
     /// @notice This function can only be called by the owner.
@@ -59,66 +66,6 @@ contract MultiTransfer is OwnerIsCreator {
         allowlistedChains[_destinationChainSelector] = allowed;
     }
 
-
-    function transferTokensPayLINK(
-        uint64 _destinationChainSelector,
-        address _receiver,
-        address _token,
-        uint256 _amount
-    )
-        external
-        onlyOwner
-        onlyAllowlistedChain(_destinationChainSelector)
-        returns (bytes32 messageId)
-    {
-        // Create an EVM2AnyMessage struct in memory with necessary information for sending a cross-chain message
-        //  address(linkToken) means fees are paid in LINK
-        Client.EVM2AnyMessage memory evm2AnyMessage = _buildCCIPMessage(
-            _receiver,
-            _token,
-            _amount,
-            address(s_linkToken)
-        );
-
-        // Get the fee required to send the message
-        uint256 fees = s_router.getFee(
-            _destinationChainSelector,
-            evm2AnyMessage
-        );
-
-        if (fees > s_linkToken.balanceOf(address(this)))
-            revert NotEnoughBalance(s_linkToken.balanceOf(address(this)), fees);
-
-        // approve the Router to transfer LINK tokens on contract's behalf. It will spend the fees in LINK
-        s_linkToken.approve(address(s_router), fees);
-
-        // approve the Router to spend tokens on contract's behalf. It will spend the amount of the given token
-        IERC20(_token).approve(address(s_router), _amount);
-
-        // Send the message through the router and store the returned message ID
-        messageId = s_router.ccipSend(
-            _destinationChainSelector,
-            evm2AnyMessage
-        );
-
-        // Emit an event with message details
-        emit TokensTransferred(
-            messageId,
-            _destinationChainSelector,
-            _receiver,
-            _token,
-            _amount,
-            address(s_linkToken),
-            fees
-        );
-
-        // Return the message ID
-        return messageId;
-    }
-
-
-
-    //new 
 
     // Struct to hold recipient and their percentage
     struct Recipient {
@@ -211,9 +158,6 @@ contract MultiTransfer is OwnerIsCreator {
         );
     }
 
-    
-
-
 
     /// @notice Construct a CCIP message.
     /// @dev This function will create an EVM2AnyMessage struct with all the necessary information for tokens transfer.
@@ -251,6 +195,7 @@ contract MultiTransfer is OwnerIsCreator {
             });
     }
 
+
     /// @notice Fallback function to allow the contract to receive Ether.
     /// @dev This function has no function body, making it a default function for receiving Ether.
     /// It is automatically called when Ether is transferred to the contract without any data.
@@ -273,6 +218,7 @@ contract MultiTransfer is OwnerIsCreator {
         // Revert if the send failed, with information about the attempted transfer
         if (!sent) revert FailedToWithdrawEth(msg.sender, _beneficiary, amount);
     }
+
 
     /// @notice Allows the owner of the contract to withdraw all tokens of a specific ERC20 token.
     /// @dev This function reverts with a 'NothingToWithdraw' error if there are no tokens to withdraw.
