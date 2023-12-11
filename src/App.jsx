@@ -54,6 +54,9 @@ function App() {
       const deployedContractAddresses = await factoryContract.methods.getDeployedContracts().call();
 
       setDeployedContracts(deployedContractAddresses);
+      if (deployedContractAddresses.length == 0) {
+        alert("No deployed contract address")
+      }
     } catch (error) {
       console.error('Error fetching deployed contracts:', error);
     }
@@ -61,7 +64,8 @@ function App() {
 
   return (
     <>
-      <h3>**only supporting mumbai testnet at the moment</h3>
+      <h3>**only deploy on SepoliaETH testnet, will support contract on other chains</h3>
+      <h3>Deploy the contract using https://remix.ethereum.org/#lang=en&optimize=false&runs=200&evmVersion=null&version=soljson-v0.8.22+commit.4fc1097e.js for easy view </h3>
       <div className='buttons'>
         <button onClick={connectToMetamask}>Connect to MetaMask</button>
         <button onClick={deployContract} disabled={!web3 || !account}>Deploy MultiTransfer Contract</button>
@@ -85,8 +89,6 @@ function App() {
               </ul>
             </div>
           )}
-
-
 
         </div>
       </div>
