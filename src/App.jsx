@@ -4,7 +4,7 @@ import factoryABI from "./utils/FactoryABI.json"
 // import MultiTransferCall from './components/MultiTransferCall';
 
 
-const MultiTransferFactoryAddress = '0x29273F902F5d4De1cd0FC6bEbBe209C27c60bBb2'; // Replace with your MultiTransferFactory contract address
+const MultiTransferFactoryAddress = '0xDD9bAAfBA9879258daCf8Bdd592963f67bEA2e7F'; // Replace with your MultiTransferFactory contract address
 import './App.css'
 
 function App() {
@@ -13,16 +13,6 @@ function App() {
   const [contractDeploymentHash, setContractDeploymentHash] = useState('');
   const [contractAddress, setContractAddress] = useState('');
   const [deployedContracts, setDeployedContracts] = useState([]);
-
-  const [submitted, setSubmitted] = useState(false);
-
-  const handleContractInputChange = (event) => {
-    setContractAddress(event.target.value);
-  };
-
-  const handleSubmit = () => {
-    setSubmitted(true);
-  };
 
 
   const connectToMetamask = async () => {
@@ -46,7 +36,7 @@ function App() {
       const factoryContract = new web3.eth.Contract(factoryABI, MultiTransferFactoryAddress);
 
       // Deploy MultiTransfer contract using the factory
-      const transaction = await factoryContract.methods.createMultiTransferContract('0x1035cabc275068e0f4b745a29cedf38e13af41b1', '0x326C977E6efc84E512bB9C30f76E30c160eD06FB')
+      const transaction = await factoryContract.methods.createMultiTransferContract('0x0bf3de8c5d3e8a2b34d2beeb17abfcebaf363a59', '0x779877A7B0D9E8603169DdbD7836e478b4624789')
         .send({ from: account });
 
       setContractDeploymentHash(transaction.transactionHash);
@@ -96,12 +86,9 @@ function App() {
             </div>
           )}
 
+
+
         </div>
-      </div>
-
-      <div>
-
-        <
       </div>
     </>
   );
